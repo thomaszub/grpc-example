@@ -39,7 +39,11 @@ func (s *server) PrimeNumbers(request *pb.PrimeNumberRequest, numbersServer pb.C
 		for i = 2; i < 1000; i++ {
 			if number%i == 0 {
 				number = number / i
-				numbersServer.Send(&pb.PrimeNumberResponse{Result: i})
+				res := &pb.PrimeNumberResponse{Result: i}
+				err := numbersServer.Send(res)
+				if err != nil {
+					log.Fatalf("Cound not send response to client with value %v", res)
+				}
 				break
 			}
 		}

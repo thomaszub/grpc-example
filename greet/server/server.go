@@ -17,7 +17,10 @@ func (s *server) GreetManyTimes(request *pb.GreetManyTimesRequest, timesServer p
 	result := "Hello " + firstName + " " + lastName + "!"
 	for i := 0; i < 10; i++ {
 		res := &pb.GreetManyTimesResponse{Result: result}
-		timesServer.Send(res)
+		err := timesServer.Send(res)
+		if err != nil {
+			log.Fatalf("Cound not send response to client with value %v", res)
+		}
 		time.Sleep(1000 * time.Millisecond)
 	}
 	return nil

@@ -13,8 +13,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("Could not build connection: %v", err)
 	}
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Printf("Error in closing connection: %v", err)
+		}
+	}()
+
 	cl := pb.NewCalculatorServiceClient(conn)
-	//doUnary(cl)
+	doUnary(cl)
 	doServerStreaming(cl)
 }
 

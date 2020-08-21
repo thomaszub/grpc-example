@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package calculator;
+option go_package = "calculator/pb";
+
+message SumRequest {
+  repeated int64 values = 1;
+}
+
+message SumResponse {
+  int64 result = 1;
+}
+
+service CalculatorService {
+  rpc Sum(SumRequest) returns (SumResponse) {};
+}

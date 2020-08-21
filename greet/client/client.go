@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/thomaszub/grpc-example/greet/pb"
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"time"
 )
 
 func main() {
@@ -23,6 +25,7 @@ func main() {
 	cl := pb.NewGreetServiceClient(conn)
 	doUnary(cl)
 	doServerStreaming(cl)
+	doClientStreaming(cl)
 }
 
 func doUnary(cl pb.GreetServiceClient) {
@@ -59,4 +62,39 @@ func doServerStreaming(cl pb.GreetServiceClient) {
 		}
 		log.Printf("Got response: %q", msg.Result)
 	}
+}
+
+func doClientStreaming(cl pb.GreetServiceClient) {
+	greetings := []*pb.Greeting{
+		{
+			FirstName: "Thomas",
+			LastName:  "Zub",
+		},
+		{
+			FirstName: "Brian",
+			LastName:  "Adams",
+		},
+		{
+			FirstName: "Luke",
+			LastName:  "Skywalker",
+		},
+	}
+
+	gCl, err := cl.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("Error calling RPC: %v", err)
+	}
+	for _, gr := range greetings {
+		req := &pb.LongGreetRequest{Greeting: gr}
+		err := gCl.Send(req)
+		if err != nil {
+			log.Fatalf("Error sending request: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	res, err := gCl.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error receiving response: %v", err)
+	}
+	fmt.Printf("Got result: %q", res.Result)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/thomaszub/grpc-example/greet/pb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -32,6 +33,38 @@ func (s *server) Greet(_ context.Context, request *pb.GreetRequest) (*pb.GreetRe
 	result := "Hello " + firstName + " " + lastName + "!"
 	res := &pb.GreetResponse{Result: result}
 	return res, nil
+}
+
+func reduce(values []string) string {
+	result := ""
+	if len(values) == 0 {
+		return result
+	}
+	for i := 0; i < len(values)-1; i++ {
+		result += values[i] + ", "
+	}
+	result += values[len(values)-1]
+	return result
+}
+
+func (s *server) LongGreet(greetServer pb.GreetService_LongGreetServer) error {
+	var greets []string
+	for {
+		req, err := greetServer.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream")
+		}
+		greets = append(greets, req.Greeting.FirstName)
+	}
+	res := &pb.LongGreetResponse{Result: "Hello " + reduce(greets) + "!"}
+	err := greetServer.SendAndClose(res)
+	if err != nil {
+		log.Fatalf("Error sending and closing: %v", err)
+	}
+	return nil
 }
 
 func main() {

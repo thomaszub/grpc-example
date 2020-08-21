@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/thomaszub/grpc-example/greet/pb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 )
 
@@ -15,7 +16,8 @@ func main() {
 	defer conn.Close()
 
 	cl := pb.NewGreetServiceClient(conn)
-	doUnary(cl)
+	//doUnary(cl)
+	doServerStreaming(cl)
 }
 
 func doUnary(cl pb.GreetServiceClient) {
@@ -30,4 +32,26 @@ func doUnary(cl pb.GreetServiceClient) {
 	}
 
 	log.Printf("Got response: %q", res.Result)
+}
+
+func doServerStreaming(cl pb.GreetServiceClient) {
+	gr := &pb.Greeting{
+		FirstName: "Thomas",
+		LastName:  "Zub",
+	}
+	req := &pb.GreetManyTimesRequest{Greeting: gr}
+	gCl, err := cl.GreetManyTimes(context.Background(), req)
+	if err != nil {
+		log.Fatalf("Error calling RPC: %v", err)
+	}
+	for {
+		msg, err := gCl.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error fetching response: %v", err)
+		}
+		log.Printf("Got response: %q", msg.Result)
+	}
 }

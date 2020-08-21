@@ -10,7 +10,7 @@ import (
 
 type server struct{}
 
-func (s server) Greet(ctx context.Context, request *pb.GreetRequest) (*pb.GreetResponse, error) {
+func (s server) Greet(_ context.Context, request *pb.GreetRequest) (*pb.GreetResponse, error) {
 	firstName := request.GetGreeting().FirstName
 	lastName := request.GetGreeting().LastName
 	result := "Hello " + firstName + " " + lastName + "!"

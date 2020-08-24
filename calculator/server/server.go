@@ -69,11 +69,17 @@ func (s *server) ComputeAverage(averageServer pb.CalculatorService_ComputeAverag
 	if count == 0 {
 		// No values from stream, returning 0
 		res := &pb.ComputeAverageResponse{Result: 0.0}
-		averageServer.SendAndClose(res)
+		err := averageServer.SendAndClose(res)
+		if err != nil {
+			log.Fatalf("Error sending response and closing stream: %v", err)
+		}
 	}
 	result := float64(sum) / float64(count)
 	res := &pb.ComputeAverageResponse{Result: result}
-	averageServer.SendAndClose(res)
+	err := averageServer.SendAndClose(res)
+	if err != nil {
+		log.Fatalf("Error sending response and closing stream: %v", err)
+	}
 	return nil
 }
 

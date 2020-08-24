@@ -66,7 +66,10 @@ func doClientStreaming(cl pb.CalculatorServiceClient) {
 	}
 	for _, value := range values {
 		req := &pb.ComputeAverageRequest{Value: value}
-		ccl.Send(req)
+		err := ccl.Send(req)
+		if err != nil {
+			log.Fatalf("Error sending request: %v", err)
+		}
 	}
 	res, err := ccl.CloseAndRecv()
 	if err != nil {

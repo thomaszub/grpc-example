@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/thomaszub/grpc-example/calculator/pb"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -48,6 +49,31 @@ func (s *server) PrimeNumbers(request *pb.PrimeNumberRequest, numbersServer pb.C
 			}
 		}
 	}
+	return nil
+}
+
+func (s *server) ComputeAverage(averageServer pb.CalculatorService_ComputeAverageServer) error {
+	var count int64 = 0
+	var sum int64 = 0
+	for {
+		req, err := averageServer.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error receiving reqeust value: %v", err)
+		}
+		sum += req.Value
+		count++
+	}
+	if count == 0 {
+		// No values from stream, returning 0
+		res := &pb.ComputeAverageResponse{Result: 0.0}
+		averageServer.SendAndClose(res)
+	}
+	result := float64(sum) / float64(count)
+	res := &pb.ComputeAverageResponse{Result: result}
+	averageServer.SendAndClose(res)
 	return nil
 }
 

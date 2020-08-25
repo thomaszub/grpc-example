@@ -23,9 +23,10 @@ func main() {
 	}()
 
 	cl := pb.NewGreetServiceClient(conn)
-	doUnary(cl)
-	doServerStreaming(cl)
-	doClientStreaming(cl)
+	//doUnary(cl)
+	//doServerStreaming(cl)
+	//doClientStreaming(cl)
+	doBiDirectionalStreaming(cl)
 }
 
 func doUnary(cl pb.GreetServiceClient) {
@@ -97,4 +98,57 @@ func doClientStreaming(cl pb.GreetServiceClient) {
 		log.Fatalf("Error receiving response: %v", err)
 	}
 	fmt.Printf("Got result: %q", res.Result)
+}
+
+func doBiDirectionalStreaming(cl pb.GreetServiceClient) {
+	greetings := []*pb.Greeting{
+		{
+			FirstName: "Thomas",
+			LastName:  "Zub",
+		},
+		{
+			FirstName: "Brian",
+			LastName:  "Adams",
+		},
+		{
+			FirstName: "Luke",
+			LastName:  "Skywalker",
+		},
+	}
+
+	gCl, err := cl.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error calling RPC: %v", err)
+	}
+
+	wait := make(chan struct{})
+
+	go func() {
+		for _, gr := range greetings {
+			req := &pb.GreetEveryoneRequest{Greeting: gr}
+			if err := gCl.Send(req); err != nil {
+				log.Fatalf("Error sending request: %v", err)
+			}
+			time.Sleep(1000 * time.Millisecond)
+		}
+		if err := gCl.CloseSend(); err != nil {
+			log.Fatalf("Error closing stream")
+		}
+	}()
+
+	go func() {
+		for {
+			res, err := gCl.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error receiving response: %v", err)
+			}
+			fmt.Printf("Got result: %q\n", res.Result)
+		}
+		close(wait)
+	}()
+
+	<-wait
 }

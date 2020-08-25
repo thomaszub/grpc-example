@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"math"
 	"net"
 	"strconv"
 )
@@ -72,6 +73,28 @@ func (s *server) ComputeAverage(averageServer pb.CalculatorService_ComputeAverag
 	err := averageServer.SendAndClose(res)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *server) FindMaximum(maximumServer pb.CalculatorService_FindMaximumServer) error {
+	var max int64 = math.MinInt64
+	for {
+		res, err := maximumServer.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		val := res.Value
+		if val > max {
+			max = val
+			res := &pb.FindMaximumResponse{CurrentMaximum: max}
+			if err := maximumServer.Send(res); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

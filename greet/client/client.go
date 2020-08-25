@@ -23,9 +23,9 @@ func main() {
 	}()
 
 	cl := pb.NewGreetServiceClient(conn)
-	//doUnary(cl)
-	//doServerStreaming(cl)
-	//doClientStreaming(cl)
+	doUnary(cl)
+	doServerStreaming(cl)
+	doClientStreaming(cl)
 	doBiDirectionalStreaming(cl)
 }
 

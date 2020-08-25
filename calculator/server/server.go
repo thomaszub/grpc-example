@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/thomaszub/grpc-example/calculator/pb"
 	"google.golang.org/grpc"
 	"io"
@@ -11,14 +12,6 @@ import (
 )
 
 type server struct{}
-
-type invalidNumberError struct {
-	value int64
-}
-
-func (e *invalidNumberError) Error() string {
-	return "Invalid number error. Number " + strconv.Itoa(int(e.value)) + " is not greater than 2"
-}
 
 func (s *server) Sum(_ context.Context, request *pb.SumRequest) (*pb.SumResponse, error) {
 	values := request.Values
@@ -33,7 +26,7 @@ func (s *server) Sum(_ context.Context, request *pb.SumRequest) (*pb.SumResponse
 func (s *server) PrimeNumbers(request *pb.PrimeNumberRequest, numbersServer pb.CalculatorService_PrimeNumbersServer) error {
 	number := request.Value
 	if number < 2 {
-		return &invalidNumberError{value: number}
+		return errors.New("Invalid number error. Number " + strconv.Itoa(int(number)) + " is not greater than 2")
 	}
 	for number > 2 {
 		var i int64
@@ -43,7 +36,7 @@ func (s *server) PrimeNumbers(request *pb.PrimeNumberRequest, numbersServer pb.C
 				res := &pb.PrimeNumberResponse{Result: i}
 				err := numbersServer.Send(res)
 				if err != nil {
-					log.Fatalf("Cound not send response to client with value %v", res)
+					return err
 				}
 				break
 			}
@@ -61,7 +54,7 @@ func (s *server) ComputeAverage(averageServer pb.CalculatorService_ComputeAverag
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error receiving reqeust value: %v", err)
+			return err
 		}
 		sum += req.Value
 		count++
@@ -71,14 +64,14 @@ func (s *server) ComputeAverage(averageServer pb.CalculatorService_ComputeAverag
 		res := &pb.ComputeAverageResponse{Result: 0.0}
 		err := averageServer.SendAndClose(res)
 		if err != nil {
-			log.Fatalf("Error sending response and closing stream: %v", err)
+			return err
 		}
 	}
 	result := float64(sum) / float64(count)
 	res := &pb.ComputeAverageResponse{Result: result}
 	err := averageServer.SendAndClose(res)
 	if err != nil {
-		log.Fatalf("Error sending response and closing stream: %v", err)
+		return err
 	}
 	return nil
 }

@@ -20,7 +20,7 @@ func (s *server) GreetManyTimes(request *pb.GreetManyTimesRequest, timesServer p
 		res := &pb.GreetManyTimesResponse{Result: result}
 		err := timesServer.Send(res)
 		if err != nil {
-			log.Fatalf("Cound not send response to client with value %v", res)
+			return err
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
@@ -55,14 +55,14 @@ func (s *server) LongGreet(greetServer pb.GreetService_LongGreetServer) error {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error while reading client stream")
+			return err
 		}
 		greets = append(greets, req.Greeting.FirstName)
 	}
 	res := &pb.LongGreetResponse{Result: "Hello " + reduce(greets) + "!"}
 	err := greetServer.SendAndClose(res)
 	if err != nil {
-		log.Fatalf("Error sending and closing: %v", err)
+		return err
 	}
 	return nil
 }
@@ -74,12 +74,12 @@ func (s *server) GreetEveryone(everyoneServer pb.GreetService_GreetEveryoneServe
 			break
 		}
 		if err != nil {
-			log.Fatalf("Error while reading client stream")
+			return err
 		}
 		result := "Hello " + req.Greeting.FirstName + "!"
 		res := &pb.GreetEveryoneResponse{Result: result}
 		if err := everyoneServer.Send(res); err != nil {
-			log.Fatalf("Error while sending server stream")
+			return err
 		}
 	}
 	return nil
